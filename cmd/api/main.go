@@ -38,7 +38,6 @@ func main() {
 		time.Sleep(time.Duration(ms) * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok\n"))
-
 	})
 
 	log.Println("listening on :8080")

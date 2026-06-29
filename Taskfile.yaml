@@ -1,0 +1,81 @@
+version: "3"
+
+vars:
+  CLUSTER_NAME: kind-go-scaling-lab
+  IMAGE_NAME: go-scaling-lab-api:local
+  NAMESPACE: go-scaling-lab
+  SERVICE_NAME: go-api
+  METRICS_SERVER_MANIFEST: deploy/k8s/addons/metrics-server/components.yaml
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  up:
+    desc: Bootstrap cluster, install metrics-server, build/load image, and apply app resources
+    cmds:
+      - task cluster:create
+      - task metrics-server:apply
+      - task image:build
+      - task image:load
+      - task k8s:apply
+
+  cluster:create:
+    desc: Create the local kind cluster
+    cmds:
+      - kind create cluster --name {{.CLUSTER_NAME}}
+
+  metrics-server:apply:
+    desc: Apply the metrics-server manifest
+    cmds:
+      - kubectl apply -f {{.METRICS_SERVER_MANIFEST}}
+
+  cluster:delete:
+    desc: Delete the local kind cluster
+    cmds:
+      - kind delete cluster --name {{.CLUSTER_NAME}}
+
+  image:build:
+    desc: Build the Go API image for local kind usage
+    cmds:
+      - docker build -t {{.IMAGE_NAME}} -f docker/Dockerfile .
+
+  image:load:
+    desc: Load the local image into kind
+    cmds:
+      - kind load docker-image {{.IMAGE_NAME}} --name {{.CLUSTER_NAME}}
+
+  k8s:apply:
+    desc: Apply namespace, deployment, service, and HPA
+    cmds:
+      - kubectl apply -f deploy/k8s/namespace.yaml
+      - kubectl apply -f deploy/k8s/deployment.yaml
+      - kubectl apply -f deploy/k8s/service.yaml
+      - kubectl apply -f deploy/k8s/hpa.yaml
+
+  port-forward:
+    desc: Forward local 8080 to the Service
+    cmds:
+      - kubectl port-forward svc/{{.SERVICE_NAME}} 8080:80 -n {{.NAMESPACE}}
+
+  top:
+    desc: Show CPU and memory usage for application pods
+    cmds:
+      - kubectl top pods -n {{.NAMESPACE}}
+
+  hpa:
+    desc: Watch the HPA for the application
+    cmds:
+      - kubectl get hpa -n {{.NAMESPACE}} -w
+
+  load:cpu:
+    desc: Generate CPU load against the API
+    cmds:
+      - while true; do curl -s 'http://localhost:8080/cpu?ms=500' >/dev/null; done
+
+  load:sleep:
+    desc: Generate latency without much CPU load
+    cmds:
+      - while true; do curl -s 'http://localhost:8080/sleep?ms=500' >/dev/null; done
