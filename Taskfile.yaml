@@ -79,3 +79,23 @@ tasks:
     desc: Generate latency without much CPU load
     cmds:
       - while true; do curl -s 'http://localhost:8080/sleep?ms=500' >/dev/null; done
+
+  load:k6:ramping:
+    desc: Run the ramping k6 load test
+    cmds:
+      - k6 run loadtest/ramping.js
+
+  load:k6:smoke:
+    desc: Run the smoke k6 load test
+    cmds:
+      - k6 run loadtest/smoke.js
+
+  load:k6:spike:
+    desc: Run the spike k6 load test
+    cmds:
+      - k6 run loadtest/spike.js
+
+  load:k6:constant:
+    desc: Run the constant k6 load test
+    cmds:
+      - k6 run loadtest/constant.js
