@@ -11,6 +11,6 @@ export const options = {
 };
 
 export default function () {
-  http.get("http://localhost:8080/cpu?ms=100");
+  http.get("http://localhost/cpu?ms=500");
   sleep(1);
 }
